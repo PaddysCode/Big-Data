@@ -164,11 +164,15 @@ async function api(pfad, daten) {
 }
 
 async function status() {
+  if (laeuft) return;   // während einer Messung nichts nebenher abfragen
   try {
     const s = await api("/api/status");
     for (const db of ["pg", "ch"]) {
-      $("p-" + db).classList.toggle("an", !!s[db]);
-      $("n-" + db).textContent = s[db] ? zahl(s[db]) + " Zeilen" : (s[db + "_bereit"] ? "keine Daten" : "startet …");
+      const n = Number(s[db]) || 0;
+      $("p-" + db).classList.toggle("an", n > 0 && !s.laedt);
+      $("n-" + db).textContent = s.laedt ? "wird geladen …"
+        : n > 0 ? zahl(n) + " Zeilen"
+        : s[db + "_bereit"] ? "keine Daten – oben „Daten laden“" : "startet …";
     }
   } catch { for (const db of ["pg", "ch"]) { $("p-" + db).classList.remove("an"); $("n-" + db).textContent = "nicht erreichbar"; } }
 }

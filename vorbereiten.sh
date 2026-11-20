@@ -31,6 +31,7 @@ docker exec -i pg psql -q -U postgres < sql/postgres_tabelle.sql
 docker exec ch clickhouse-client -q "SELECT * FROM ereignisse FORMAT CSV" \
   | docker exec -i pg psql -q -U postgres -c "\copy ereignisse FROM STDIN WITH (FORMAT csv)"
 docker exec pg psql -q -U postgres -c "VACUUM ANALYZE ereignisse"
+docker exec pg psql -q -U postgres -c "DO \$\$ BEGIN EXECUTE format('COMMENT ON TABLE ereignisse IS %L', (SELECT count(*) FROM ereignisse)); END \$\$"
 echo "    fertig nach $(( $(date +%s) - start )) s"
 
 echo "==> Kontrolle: Zeilen und Speicherplatz"

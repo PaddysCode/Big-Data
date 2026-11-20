@@ -104,6 +104,8 @@ def daten_laden(n):
                         copy.write(block)
             log("PostgreSQL: Statistiken aktualisieren (VACUUM ANALYZE) …")
             con.execute("VACUUM ANALYZE ereignisse")
+            anzahl = con.execute("SELECT count(*) FROM ereignisse").fetchone()[0]
+            con.execute(f"COMMENT ON TABLE ereignisse IS '{int(anzahl)}'")
         log(f"PostgreSQL fertig nach {time.time() - t:.0f} s")
         log("Fertig.")
     except Exception as e:
@@ -132,10 +134,16 @@ class Handler(BaseHTTPRequestHandler):
             self.senden((HIER / "index.html").read_bytes(), "text/html; charset=utf-8")
         elif pfad == "/api/status":
             self.senden({
-                "ch": ch_wert("SELECT count() FROM ereignisse"),
-                "pg": pg_wert("SELECT count(*) FROM ereignisse"),
+                # Nur Metadaten lesen (sofort), damit die Statusanzeige laufende Messungen nicht bremst
+                "ch": ch_wert("SELECT total_rows FROM system.tables "
+                              "WHERE database = currentDatabase() AND name = 'ereignisse'"),
+                # exakte Zahl steht nach dem Laden als Kommentar an der Tabelle, sonst Schätzung
+                "pg": pg_wert("SELECT coalesce(obj_description(oid, 'pg_class')::bigint, "
+                              "greatest(reltuples, 0)::bigint) FROM pg_class "
+                              "WHERE relname = 'ereignisse' AND relkind = 'r'"),
                 "ch_bereit": ch_wert("SELECT 1") is not None,
                 "pg_bereit": pg_wert("SELECT 1") is not None,
+                "laedt": laden_status["laeuft"],
             })
         elif pfad == "/api/abfragen":
             self.senden(abfragen())
