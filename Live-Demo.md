@@ -26,6 +26,15 @@
 
 **Tipp:** In ClickHouse unter dem Ergebnis auf „Processed 20.00 million rows … (x million rows/s)“ zeigen.
 
+## Variante: alles in einem Terminal mit `./demo.sh`
+
+Statt die Abfragen von Hand zu kopieren, kann A auch `./demo.sh` starten. Das Skript zeigt
+jeden SQL-Befehl an und führt ihn nach **Enter** aus: erst in PostgreSQL, dann in ClickHouse,
+jeweils mit Ergebnis und Zeit. Weniger Tippfehler-Risiko, dafür nicht nebeneinander.
+
+- `./demo.sh 3 4` zeigt nur die Abfragen 3 und 4
+- `AUTO=1 ./demo.sh` läuft ohne Enter von allein durch (zum Üben)
+
 ## Wenn etwas hakt
 
 Nicht debuggen, sofort auf die Backup-Folie wechseln: „Hier die Ergebnisse aus unserem Testlauf.“

@@ -9,7 +9,7 @@ SELECT region,
        round(100 * avg((status = 'Fehler')::int), 2)            AS fehler_prozent
 FROM ereignisse
 GROUP BY region
-ORDER BY fehler_prozent DESC;
+ORDER BY fehler_prozent DESC, region;
 
 -- @3 Rechnen: Durchschnitt und 95-%-Perzentil der Antwortzeit je Dienst
 SELECT dienst,

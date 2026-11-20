@@ -28,6 +28,13 @@ deshalb dieselben Daten und dieselben Ergebnisse, nur die Zeiten unterscheiden s
 
 Andere Datenmenge: `./vorbereiten.sh 10000000`
 
+## Demo ansehen
+
+```bash
+./demo.sh          # zeigt jeden SQL-Befehl, Enter führt ihn in PostgreSQL und ClickHouse aus
+AUTO=1 ./demo.sh   # läuft von allein durch
+```
+
 ## Messen
 
 ```bash
