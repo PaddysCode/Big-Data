@@ -17,9 +17,9 @@ SELECT dienst,
        quantileExact(0.95)(antwortzeit_ms)       AS p95_ms
 FROM ereignisse
 GROUP BY dienst
-ORDER BY p95_ms DESC;
+ORDER BY avg_ms DESC, dienst;
 
--- @4 Schwer: 95-%-Perzentil je Region und Tag (ca. 2.200 Gruppen), die 10 schlimmsten Tage
+-- @4 Schwer: 95-%-Perzentil je Region und Tag (ca. 2.200 Gruppen), die 8 schlimmsten Tage
 SELECT region,
        toDate(zeit)                              AS tag,
        count()                                   AS ereignisse,
@@ -27,4 +27,4 @@ SELECT region,
 FROM ereignisse
 GROUP BY region, tag
 ORDER BY p95_ms DESC, region, tag
-LIMIT 10;
+LIMIT 8;

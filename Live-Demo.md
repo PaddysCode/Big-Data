@@ -20,7 +20,7 @@
 | 0:30 | B | „Links PostgreSQL, rechts ClickHouse. Beide haben exakt dieselben 20 Millionen Service-Ereignisse.“ |
 | 0:30 | A | In beiden: **Abfrage 1** (Fehler zählen). B: „Selbst einfaches Zählen: halbe Sekunde gegen sofort.“ |
 | 1:30 | A | **Abfrage 3** zuerst links, Enter, dann sofort rechts, Enter. B: „Durchschnitt und 95-%-Perzentil der Antwortzeit je Dienst, eine typische Dashboard-Frage.“ ClickHouse ist sofort fertig, PostgreSQL rechnet ca. 10 s. B in der Wartezeit: „ClickHouse liest nur die zwei Spalten, die es braucht, PostgreSQL jede Zeile komplett.“ |
-| 1:30 | A | **Abfrage 4** genauso. B: „Jetzt pro Region und Tag, die zehn schlimmsten Tage.“ Ergebnis: Köln, 10.–17. März. „Da ist unsere eingebaute Störung, gefunden in 0,2 Sekunden.“ |
+| 1:30 | A | **Abfrage 4** genauso. B: „Jetzt pro Region und Tag, die acht schlimmsten Tage.“ Ergebnis: Köln, 10.–17. März. „Da ist unsere eingebaute Störung, gefunden in 0,2 Sekunden.“ |
 | 0:30 | B | Speicherplatz (aus `./vorbereiten.sh`): 146 MB gegen 1,2 GB. „Spalten lassen sich viel besser komprimieren.“ |
 | 0:30 | B | Fazit: „Rund 35- bis 75-mal schneller und 8-mal kleiner. PostgreSQL ist nicht schlecht, es ist für Transaktionen gebaut. ClickHouse für genau diese Analysen.“ |
 
