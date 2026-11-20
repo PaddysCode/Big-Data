@@ -1,7 +1,10 @@
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:24.8
+    image: clickhouse/clickhouse-server:26.8
     container_name: ch
+    # Eigene Weboberfläche ("Play") für die Demo: http://localhost:8123/play
+    ports:
+      - "127.0.0.1:8123:8123"
     environment:
       # Zugriff aus dem internen Docker-Netz erlauben (für die Weboberfläche).
       # Kein Port nach außen freigegeben, nur dieser Rechner kommt dran.
@@ -14,6 +17,9 @@ services:
   postgres:
     image: postgres:16
     container_name: pg
+    # Natives arm64-Image erzwingen, damit PostgreSQL nicht über Rosetta
+    # emuliert läuft — sonst wäre der Vergleich unfair.
+    platform: linux/arm64
     environment:
       POSTGRES_PASSWORD: demo
     shm_size: 1g
