@@ -6,14 +6,34 @@ Demo zum Vortrag „ClickHouse – Spaltenorientierte analytische Datenbank für
 Beide Datenbanken bekommen **exakt dieselben 20 Mio. Service-Ereignisse**, dann laufen
 dieselben Abfragen in beiden. Nur Open-Source-Versionen, alles lokal in Docker.
 
-## Einrichten (einmalig, ca. 2 Minuten)
+## Schnellstart mit Weboberfläche
 
-Voraussetzungen: [Docker Desktop](https://www.docker.com/products/docker-desktop/) läuft,
+Voraussetzungen: [Docker Desktop](https://www.docker.com/products/docker-desktop/),
 ca. 8 GB RAM für Docker, ca. 3 GB freier Speicher.
 
 ```bash
 git clone https://github.com/PaddysCode/Big-Data.git
-cd Big-Data
+```
+
+1. Im Finder im Ordner `Big-Data` auf **`Demo starten.command`** doppelklicken
+   (oder im Terminal: `docker compose up -d --build`, dann http://localhost:8080 öffnen).
+   Das startet ClickHouse, PostgreSQL und die Weboberfläche und öffnet den Browser.
+2. Einmalig oben rechts auf **„Daten laden“** klicken (ca. 1–2 Minuten).
+3. Abfrage wählen, **„Beide starten“**: links PostgreSQL, rechts ClickHouse, gleichzeitig,
+   mit Live-Stoppuhr, Ergebnis und Faktor.
+
+Tastatur: `Leertaste` starten · `1`–`4` Abfrage · `←` `→` blättern · `S` Speicherplatz · `F` Vollbild
+
+**Wichtig:** Vor dem Vortrag jede Abfrage einmal laufen lassen. Direkt nach dem Laden ist der
+Cache kalt, PostgreSQL braucht dann deutlich länger (gemessen 16 s statt 10 s).
+
+Beim ersten Start muss macOS evtl. das Öffnen erlauben: Rechtsklick auf die Datei → „Öffnen“.
+
+Stoppen: `docker compose stop` · Alles löschen: `docker compose down -v`
+
+## Ohne Weboberfläche (Terminal)
+
+```bash
 ./vorbereiten.sh
 ```
 

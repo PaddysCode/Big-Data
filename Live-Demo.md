@@ -1,8 +1,18 @@
 # Ablauf Live-Demo (ca. 5 Minuten)
 
-**A** tippt, **B** erzählt. Alle Abfragen stehen in `sql/abfragen_*.sql` zum Kopieren.
+**A** bedient, **B** erzählt.
 
-## Vorher (zu Hause / vor dem Vortrag)
+## Empfohlen: Weboberfläche
+
+- [ ] Vorher: `Demo starten.command` doppelklicken, Daten einmal geladen (oben rechts zeigt 20.000.000 Zeilen)
+- [ ] Jede Abfrage einmal gestartet (Cache aufwärmen!)
+- [ ] Browser im Vollbild (`F`), Zoom so, dass die Ergebnistabellen sichtbar sind (Cmd + / Cmd −)
+- [ ] Live: Abfrage mit `1`–`4` wählen, `Leertaste` startet beide gleichzeitig, B erzählt wie unten
+- [ ] Zum Schluss `S` für den Speicherplatz-Vergleich
+
+Der Ablauf unten gilt genauso, nur ohne Tippen.
+
+## Alternative: zwei Terminals (vorher, zu Hause / vor dem Vortrag)
 
 - [ ] `./vorbereiten.sh` auf dem Präsentations-Laptop gelaufen, Docker Desktop läuft
 - [ ] Ersatz-Laptop ebenfalls vorbereitet

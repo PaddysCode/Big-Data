@@ -2,6 +2,10 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:24.8
     container_name: ch
+    environment:
+      # Zugriff aus dem internen Docker-Netz erlauben (für die Weboberfläche).
+      # Kein Port nach außen freigegeben, nur dieser Rechner kommt dran.
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
     ulimits:
       nofile: { soft: 262144, hard: 262144 }
     volumes:
@@ -22,6 +26,18 @@ services:
       -c max_parallel_workers_per_gather=4
     volumes:
       - pg_daten:/var/lib/postgresql/data
+
+  # Weboberfläche für die Live-Demo: http://localhost:8080
+  ui:
+    build: ./ui
+    container_name: demo-ui
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./sql:/app/sql:ro
+    depends_on:
+      - clickhouse
+      - postgres
 
 volumes:
   ch_daten:

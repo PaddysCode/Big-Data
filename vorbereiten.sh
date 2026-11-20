@@ -9,7 +9,11 @@ N="${1:-20000000}"
 echo "==> Datenmenge: $N Zeilen"
 
 echo "==> Container starten"
-docker compose up -d
+if docker inspect ch pg >/dev/null 2>&1; then
+  docker start ch pg >/dev/null     # gibt es schon (z. B. aus einem anderen Ordner)
+else
+  docker compose up -d
+fi
 
 echo "==> Warten, bis beide Datenbanken bereit sind"
 until docker exec ch clickhouse-client -q "SELECT 1" >/dev/null 2>&1; do sleep 1; done
