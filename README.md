@@ -3,13 +3,13 @@
 Demo zum Vortrag „ClickHouse – Spaltenorientierte analytische Datenbank für Big Data“
 (Big Data Analyse und Visualisierung, H-BRS, 27.11.2026).
 
-Beide Datenbanken bekommen **exakt dieselben 20 Mio. Service-Ereignisse**, dann laufen
+Beide Datenbanken bekommen **exakt dieselben 100 Mio. Service-Ereignisse**, dann laufen
 dieselben Abfragen in beiden. Nur Open-Source-Versionen, alles lokal in Docker.
 
 ## Schnellstart mit Weboberfläche
 
 Voraussetzungen: [Docker Desktop](https://www.docker.com/products/docker-desktop/),
-ca. 8 GB RAM für Docker, ca. 3 GB freier Speicher.
+ca. 8 GB RAM für Docker, ca. 12 GB freier Speicher.
 
 ```bash
 git clone https://github.com/PaddysCode/Big-Data.git
@@ -18,14 +18,14 @@ git clone https://github.com/PaddysCode/Big-Data.git
 1. Im Finder im Ordner `Big-Data` auf **`Demo starten.command`** doppelklicken
    (oder im Terminal: `docker compose up -d --build`, dann http://localhost:8080 öffnen).
    Das startet ClickHouse, PostgreSQL und die Weboberfläche und öffnet den Browser.
-2. Einmalig oben rechts auf **„Daten laden“** klicken (ca. 1–2 Minuten).
-3. Abfrage wählen, **„Beide starten“**: links PostgreSQL, rechts ClickHouse, gleichzeitig,
+2. Einmalig oben rechts auf **„Daten laden“** klicken (ca. 4–5 Minuten).
+3. Schritt wählen, **„Beide starten“**: links PostgreSQL, rechts ClickHouse, gleichzeitig,
    mit Live-Stoppuhr, Ergebnis und Faktor.
 
-Tastatur: `Leertaste` starten · `1`–`4` Abfrage · `←` `→` blättern · `S` Speicherplatz · `F` Vollbild
+Tastatur: `Leertaste` starten · `1`–`5` Schritt · `←` `→` blättern · `F` Vollbild
 
 **Wichtig:** Vor dem Vortrag jede Abfrage einmal laufen lassen. Direkt nach dem Laden ist der
-Cache kalt, PostgreSQL braucht dann deutlich länger (gemessen 16 s statt 10 s).
+Cache kalt, PostgreSQL braucht dann deutlich länger.
 
 Beim ersten Start muss macOS evtl. das Öffnen erlauben: Rechtsklick auf die Datei → „Öffnen“.
 
@@ -38,15 +38,15 @@ Stoppen: `docker compose stop` · Alles löschen: `docker compose down -v`
 ```
 
 Das Skript
-1. startet ClickHouse 24.8 und PostgreSQL 16 (`docker-compose.yml`),
-2. erzeugt in ClickHouse 20 Mio. Zeilen (`sql/clickhouse_tabelle.sql`),
+1. startet ClickHouse 26.8 und PostgreSQL 16 (`docker-compose.yml`),
+2. erzeugt in ClickHouse 100 Mio. Zeilen und daraus eine Vergleichstabelle mit 10 Mio. (`sql/clickhouse_tabelle.sql`),
 3. kopiert genau diese Zeilen nach PostgreSQL,
 4. zeigt Zeilenzahl und Speicherplatz beider Datenbanken.
 
 Die Daten werden aus der Zeilennummer berechnet, nicht zufällig erzeugt. Jeder Rechner hat
 deshalb dieselben Daten und dieselben Ergebnisse, nur die Zeiten unterscheiden sich.
 
-Andere Datenmenge: `./vorbereiten.sh 10000000`
+Andere Datenmenge: `./vorbereiten.sh 20000000`
 
 ## Demo ansehen
 
@@ -65,23 +65,24 @@ Führt jede Abfrage aus `sql/` in beiden Datenbanken aus (1× aufwärmen, 3× me
 
 ## Ergebnisse
 
-Gemessen am 20.11.2026, MacBook Pro (Intel i9, Docker mit 8 GB RAM), 20 Mio. Zeilen:
+Gemessen am 23.11.2026 mit `./benchmark.sh`, MacBook (Apple M6, Docker mit 8 GB RAM), 100 Mio. Zeilen, Schritt 5 mit 10 Mio.:
 
 | Abfrage | ClickHouse | PostgreSQL | Faktor |
 |---|---:|---:|---:|
-| 1) Fehler zählen | 0,01 s | 0,53 s | 35× |
-| 2) Fehlerquote je Region | 0,04 s | 1,35 s | 35× |
-| 3) Ø und 95-%-Perzentil je Dienst | 0,13 s | 9,35 s | 74× |
-| 4) 95-%-Perzentil je Region und Tag | 0,19 s | 12,19 s | 65× |
-| Speicherplatz | 146 MB | 1.199 MB | 8× |
+| 1) Daten: Wie viele Service-Ereignisse haben wir? | 0,11 s | 2,33 s | 21× |
+| 2) Wo? In welcher Region gibt es die meisten Fehler? | 0,12 s | 2,41 s | 19× |
+| 3) Wann? Fehler pro Woche in Köln | 0,03 s | 2,43 s | 84× |
+| 4) Warum? Fehler in Köln nach Dienst und Fehlertyp | 0,01 s | 2,52 s | 280× |
+| 5) Vergleich: Antwortzeiten je Dienst bei 10 Mio. Zeilen | 0,06 s | 5,99 s | 100× |
+| Speicherbedarf bei 10 Mio. Zeilen | 78 MB | 734 MB | 9× |
 
 ## Die Daten
 
-Tabelle `ereignisse`: `zeit`, `region` (6 Städte), `dienst` (5 Dienste), `status`,
-`fehlertyp`, `antwortzeit_ms`. Ein Jahr (2026), Grundfehlerrate 2 %.
+Tabelle `service_ereignisse` (100 Mio. Zeilen): `zeit`, `region` (6), `dienst` (5), `fehlertyp`, `status`,
+`antwortzeit_ms`. Ein Jahr (2026), Grundfehlerrate 2 %. `ereignisse_10mio` ist ein Zehntel davon für den Vergleich in Schritt 5.
 
 **Eingebaute Störung:** 10.–17.03.2026 scheitern in Köln 30 % der Zahlungen mit Timeout.
-Abfrage 4 findet genau diese Tage.
+Die Abfragen finden sie Schritt für Schritt: wo (2), wann (3), warum (4). Schritt 5 ist der Vergleich von Folie 13.
 
 ## Fairness
 
@@ -89,7 +90,8 @@ Abfrage 4 findet genau diese Tage.
 - Vor dem Messen ein Aufwärmlauf, damit beide Datenbanken einen warmen Cache haben
 - PostgreSQL mit vernünftigen Einstellungen statt der sehr kleinen Standardwerte
   (`shared_buffers=1GB`, `work_mem=256MB`, 4 parallele Worker)
-- Kein Index in PostgreSQL: Die Abfragen lesen sowieso die ganze Tabelle, ein Index hilft dabei kaum.
+- Kein Index in PostgreSQL: Schritt 1, 2 und 5 werten viele Zeilen aus, da hilft ein Index kaum. Bei Schritt 3 und 4 würde
+  ein Index auf `(region, zeit)` helfen, ClickHouse hat diese Sortierung eingebaut.
 - PostgreSQL ist nicht schlecht, sondern für Transaktionen (OLTP) gebaut, ClickHouse für Analysen (OLAP).
 
 ## Aufräumen
