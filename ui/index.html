@@ -6,143 +6,169 @@
 <title>ClickHouse vs. PostgreSQL</title>
 <style>
   :root {
-    --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --line: #2a2f3a;
-    --text: #e8eaef; --muted: #8a91a0;
-    --pg: #5b9cf5; --ch: #f7c948; --ok: #5fd38d; --err: #ff6b6b;
+    --bg: #151515; --flaeche: #1e1e1e; --linie: #333; --text: #fff; --grau: #b5b5b5; --dunkel: #6b6b6b;
+    --pg: #b5b5b5; --ch: #faff69; --rot: #d93f44;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
-    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  body { display: flex; flex-direction: column; padding: 18px 24px 20px; gap: 16px; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 17px/1.4 Arial, Helvetica, sans-serif; }
+  html { overflow: hidden; }
+  body { zoom: var(--z, 1); height: calc(100vh / var(--z, 1)); display: flex; flex-direction: column; padding: 22px 40px 16px; gap: 16px; }
+  button { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; }
 
-  header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-  h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
-  h1 .pg { color: var(--pg); } h1 .ch { color: var(--ch); } h1 .vs { color: var(--muted); font-weight: 400; margin: 0 .3em; }
-  .unter { color: var(--muted); font-size: 14px; }
-  .rechts { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .pill { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 999px;
-    background: var(--panel); border: 1px solid var(--line); font-size: 14px; white-space: nowrap; }
-  .punkt { width: 9px; height: 9px; border-radius: 50%; background: var(--err); }
-  .punkt.an { background: var(--ok); }
-  button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line);
-    border-radius: 10px; padding: 8px 14px; cursor: pointer; }
-  button:hover { border-color: #49505f; }
-  button:disabled { opacity: .45; cursor: default; }
+  header { display: flex; align-items: baseline; gap: 40px; border-bottom: 1px solid var(--linie); }
+  .oben { margin-left: auto; align-self: center; margin-bottom: 14px; display: flex; gap: 18px; align-items: center; color: var(--dunkel); font-size: 14px; white-space: nowrap; }
+  .oben button { font-size: 14px; color: var(--text); padding: 7px 14px; border: 1px solid var(--linie); }
+  .oben button:hover { border-color: var(--grau); }
+  h1 { margin: 0 0 14px; font-size: 22px; font-weight: 700; white-space: nowrap; }
+  h1 .ch { color: var(--ch); } h1 .vs { color: var(--dunkel); font-weight: 400; margin: 0 .35em; }
+  nav { display: flex; gap: 30px; }
+  nav button { color: var(--dunkel); font-size: 18px; padding-bottom: 14px; margin-bottom: -1px; border-bottom: 3px solid transparent; }
+  nav button:hover { color: var(--grau); }
+  nav button.aktiv { color: var(--text); font-weight: 700; border-bottom-color: var(--ch); }
+  nav button .k { margin-right: 8px; color: var(--dunkel); font-weight: 400; }
 
-  nav { display: flex; gap: 8px; flex-wrap: wrap; }
-  nav button { padding: 10px 16px; font-size: 15px; }
-  nav button.aktiv { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
-  nav button .k { opacity: .55; margin-right: 6px; font-family: var(--mono); }
+  .frage { font-size: 34px; font-weight: 700; line-height: 1.15; }
+  .erkenntnis { min-height: 26px; font-size: 21px; color: var(--ch); margin-top: -8px; }
 
-  .frage { font-size: 22px; font-weight: 600; margin: 2px 0 0; }
-
-  .duell { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .seite { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px;
-    display: flex; flex-direction: column; gap: 14px; min-height: 0; border-top: 4px solid var(--farbe); }
+  .duell { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .seite { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding-right: 32px; }
+  .seite.ch { padding: 0 0 0 32px; border-left: 1px solid var(--linie); }
   .seite.pg { --farbe: var(--pg); } .seite.ch { --farbe: var(--ch); }
-  .seite h2 { margin: 0; font-size: 22px; color: var(--farbe); display: flex; justify-content: space-between; align-items: baseline; }
-  .seite h2 small { color: var(--muted); font-size: 13px; font-weight: 400; }
-  pre.sql { margin: 0; background: var(--bg); border-radius: 10px; padding: 12px 14px; font: 14px/1.5 var(--mono);
-    color: #c9cfdb; white-space: pre-wrap; overflow: auto; max-height: 30vh; }
-  .kw { color: var(--farbe); font-weight: 600; }
+  .seite h2 { margin: 0; font-size: 26px; color: var(--farbe); display: flex; justify-content: space-between; align-items: baseline; }
+  .seite h2 small { color: var(--dunkel); font-size: 15px; font-weight: 400; }
+  pre.sql { flex: 1 0 auto; margin: 0; background: var(--flaeche); padding: 12px 16px; font: 14px/1.5 var(--mono); color: var(--grau);
+    white-space: pre-wrap; overflow: auto; max-height: 250px; border-left: 3px solid var(--farbe); }
+  .kw { color: var(--text); font-weight: 700; }
 
-  .uhr { display: flex; align-items: baseline; gap: 14px; }
-  .zeit { font: 700 64px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-  .zeit .s { font-size: 28px; color: var(--muted); margin-left: 4px; }
-  .zustand { color: var(--muted); font-size: 16px; }
-  .zustand.fertig { color: var(--ok); font-weight: 600; }
-  .spur { height: 14px; background: var(--bg); border-radius: 7px; overflow: hidden; }
-  .balken { height: 100%; width: 0; background: var(--farbe); border-radius: 7px; transition: width .1s linear; }
+  .uhr { display: flex; align-items: baseline; gap: 16px; }
+  .zeit { font: 700 60px/1 Arial, sans-serif; font-variant-numeric: tabular-nums; color: var(--farbe); }
+  .zeit .s { font-size: 26px; color: var(--dunkel); margin-left: 4px; }
+  .zustand { color: var(--dunkel); font-size: 17px; }
+  .zustand.fertig { color: var(--text); }
+  .spur { height: 10px; background: var(--flaeche); overflow: hidden; }
+  .balken { height: 100%; width: 0; background: var(--farbe); transition: width .1s linear; }
 
-  .ergebnis { flex: 1; min-height: 0; overflow: auto; }
-  table { border-collapse: collapse; width: 100%; font: 15px/1.35 var(--mono); }
-  th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 10px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
-  td { padding: 5px 10px; border-bottom: 1px solid #20242d; }
+  .unten { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--linie); padding-top: 8px; }
+  .ergebnis { min-height: 0; overflow: auto; padding-right: 32px; }
+  .lesen { min-height: 0; display: flex; flex-direction: column; padding-left: 32px; border-left: 1px solid var(--linie); }
+  .lesen .paar { flex: 1; min-height: 0; max-height: 320px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .karte { min-height: 0; display: flex; flex-direction: column; gap: 5px; }
+  .karte.pg { --farbe: var(--pg); } .karte.ch { --farbe: var(--ch); }
+  .karte h3 { margin: 0; font-size: 17px; line-height: 1.4; color: var(--farbe); }
+  .koepfe { display: grid; grid-template-columns: repeat(6, 1fr); font-size: 12px; color: var(--dunkel); text-align: center; }
+  .karte.ch .koepfe { column-gap: 8px; }
+  .koepfe span { white-space: nowrap; }
+  .karte.aktiv .koepfe .noetig { color: var(--farbe); font-weight: 700; }
+  .raster { flex: 1; min-height: 0; display: grid; grid-template: repeat(8, 1fr) / repeat(6, 1fr); }
+  .karte.pg .raster { row-gap: 5px; } .karte.ch .raster { column-gap: 8px; }
+  .raster i { background: #2b2b2b; position: relative; }
+  .karte.pg .raster i + i:not(:nth-child(6n + 1)) { border-left: 1px solid var(--bg); }
+  .karte.ch .raster i:nth-child(n + 7) { border-top: 1px solid var(--bg); }
+  .raster i::after { content: ""; position: absolute; inset: 0; background: var(--farbe); opacity: 0; }
+  .karte.liest .raster i.an::after { animation: lesen .9s linear infinite; animation-delay: calc(var(--takt) * .1s); }
+  .karte.fertig .raster i.an::after { opacity: 1; transition: opacity .15s linear; transition-delay: calc(var(--takt) * .05s); }
+  @keyframes lesen { 0%, 60% { opacity: .25; } 10% { opacity: 1; } 100% { opacity: .25; } }
+  .karte .text { font-size: 14px; color: var(--grau); min-height: 42px; line-height: 1.35; }
+  .karte .text b { color: var(--farbe); font-size: 18px; }
+  .ergebnis-kopf { display: flex; gap: 14px; align-items: baseline; font-size: 15px; color: var(--dunkel); margin-bottom: 4px; }
+  .ergebnis-kopf b { color: var(--text); font-size: 17px; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th { text-align: left; color: var(--dunkel); font-weight: 400; font-size: 14px; padding: 2px 10px 4px; border-bottom: 1px solid var(--linie); position: sticky; top: 0; background: var(--bg); }
+  td { padding: 2px 10px; border-bottom: 1px solid #222; font-variant-numeric: tabular-nums; }
   td.zahl, th.zahl { text-align: right; }
 
-  footer { display: flex; align-items: center; justify-content: center; gap: 24px; min-height: 64px; }
-  #start { font-size: 20px; font-weight: 700; padding: 14px 34px; border-radius: 14px; background: var(--ok); color: #0b1a10; border: 0; }
-  #start:disabled { background: var(--panel2); color: var(--muted); }
-  #urteil { font-size: 26px; font-weight: 700; color: var(--ok); }
-  #urteil small { display: block; font-size: 14px; color: var(--muted); font-weight: 400; text-align: center; }
-  .tipp { color: var(--muted); font-size: 13px; }
-  .tipp kbd { font-family: var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+  footer { display: flex; align-items: center; gap: 32px; min-height: 64px; border-top: 1px solid var(--linie); padding-top: 16px; }
+  #start { font-size: 20px; font-weight: 700; padding: 14px 34px; white-space: nowrap; background: var(--ch); color: #151515; }
+  #urteil { font-size: 28px; font-weight: 700; white-space: nowrap; }
+  #urteil .ch { color: var(--ch); }
+  #urteil small { margin-left: 14px; font-size: 16px; color: var(--dunkel); font-weight: 400; }
+  .technik { margin-left: auto; color: var(--dunkel); font-size: 13px; white-space: nowrap; }
+  .punkt { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--rot); margin-right: 6px; }
+  .punkt.an { background: #2e9e6b; }
+  .technik kbd { font: 12px var(--mono); border: 1px solid var(--linie); padding: 0 4px; }
 
-  /* Speicherplatz */
-  .speicher { flex: 1; display: none; flex-direction: column; justify-content: center; gap: 28px; padding: 0 6vw; }
-  .speicher .zeile { display: grid; grid-template-columns: 160px 1fr 140px; align-items: center; gap: 18px; font-size: 22px; }
-  .speicher .zeile b { color: var(--farbe); }
-  .speicher .spur { height: 44px; border-radius: 10px; } .speicher .balken { border-radius: 10px; transition: width 1.2s ease; }
-  .speicher .wert { font: 700 26px var(--mono); }
-  .speicher .fazit { text-align: center; font-size: 30px; font-weight: 700; color: var(--ok); }
-  .speicher .erkl { text-align: center; color: var(--muted); font-size: 17px; margin-top: -14px; }
-  body.modus-speicher .duell, body.modus-speicher footer, body.modus-speicher .frage { display: none; }
-  body.modus-speicher .speicher { display: flex; }
-
-  /* Daten laden */
-  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 16px; padding: 24px; width: min(640px, 92vw); }
-  dialog::backdrop { background: rgba(0,0,0,.6); }
+  .speicher { margin-top: 14px; border-top: 1px solid var(--linie); padding-top: 8px; }
+  .gross { display: flex; gap: 56px; padding-top: 22px; }
+  .gross div { font-size: 16px; color: var(--grau); white-space: nowrap; }
+  .gross b { display: block; font-size: 46px; line-height: 1.15; color: var(--text); }
+  .bk { display: grid; grid-template-columns: max-content 1fr max-content; gap: 8px 16px; align-items: center; padding-top: 6px; font-size: 16px; }
+  .bk .w { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bk .sp { height: 20px; background: var(--flaeche); position: relative; }
+  .bk .sp i { display: block; height: 100%; background: var(--farbe, var(--grau)); }
+  .bk .sp u { position: absolute; top: -4px; bottom: -4px; border-left: 2px dashed #6b6b6b; }
+  .bk .t { color: var(--ch); font-weight: 700; } .bk .sp.t { --farbe: var(--ch); }
+  .bk .nl { font-size: 13px; color: var(--grau); position: relative; height: 16px; }
+  .bk .nl span { position: absolute; right: 0; white-space: nowrap; }
+  .verlauf { width: 100%; display: block; font: 13px Arial, sans-serif; }
+  .verlauf text { fill: var(--grau); } .verlauf .t { fill: var(--ch); font-weight: 700; font-size: 16px; }
+  dialog { background: var(--flaeche); color: var(--text); border: 1px solid var(--linie); padding: 24px; width: min(640px, 92vw); }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
   dialog h3 { margin: 0 0 8px; font-size: 20px; }
-  dialog pre { background: var(--bg); border-radius: 10px; padding: 12px; font: 14px/1.5 var(--mono); min-height: 120px; white-space: pre-wrap; }
-  dialog .knoepfe { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
-  .fehler { color: var(--err); }
+  dialog pre { background: var(--bg); padding: 12px; font: 14px/1.5 var(--mono); min-height: 120px; white-space: pre-wrap; }
+  dialog .knoepfe { display: flex; gap: 18px; justify-content: flex-end; margin-top: 14px; }
+  dialog .knoepfe button { padding: 8px 16px; border: 1px solid var(--linie); }
+  .fehler { color: var(--rot); }
 </style>
 </head>
 <body>
 <header>
-  <div>
-    <h1><span class="pg">PostgreSQL</span><span class="vs">vs.</span><span class="ch">ClickHouse</span></h1>
-    <div class="unter">Dieselben Service-Ereignisse in beiden Datenbanken · dieselbe Frage · gleichzeitig gestartet</div>
-  </div>
-  <div class="rechts">
-    <span class="pill"><span class="punkt" id="p-pg"></span>PostgreSQL <span id="n-pg">…</span></span>
-    <span class="pill"><span class="punkt" id="p-ch"></span>ClickHouse <span id="n-ch">…</span></span>
+  <h1>PostgreSQL<span class="vs">gegen</span><span class="ch">ClickHouse</span></h1>
+  <nav id="tabs"></nav>
+  <div class="oben">
+    <span><span class="punkt" id="p-pg"></span>PostgreSQL <span id="n-pg">…</span></span>
+    <span><span class="punkt" id="p-ch"></span>ClickHouse <span id="n-ch">…</span></span>
     <button id="laden">Daten laden</button>
-    <button id="vollbild" title="Vollbild (F)">⛶ Vollbild</button>
+    <button id="vollbild">Vollbild</button>
   </div>
 </header>
 
-<nav id="tabs"></nav>
 <div class="frage" id="frage"></div>
+<div class="erkenntnis" id="erkenntnis"></div>
 
 <main class="duell">
   <section class="seite pg" id="seite-pg">
-    <h2>PostgreSQL <small>zeilenorientiert · OLTP</small></h2>
+    <h2>PostgreSQL <small>speichert Zeile für Zeile</small></h2>
     <pre class="sql" id="sql-pg"></pre>
     <div class="uhr"><div class="zeit" id="zeit-pg">0,00<span class="s">s</span></div><div class="zustand" id="zst-pg">bereit</div></div>
     <div class="spur"><div class="balken" id="bal-pg"></div></div>
-    <div class="ergebnis" id="erg-pg"></div>
   </section>
   <section class="seite ch" id="seite-ch">
-    <h2>ClickHouse <small>spaltenorientiert · OLAP</small></h2>
+    <h2>ClickHouse <small>speichert Spalte für Spalte</small></h2>
     <pre class="sql" id="sql-ch"></pre>
     <div class="uhr"><div class="zeit" id="zeit-ch">0,00<span class="s">s</span></div><div class="zustand" id="zst-ch">bereit</div></div>
     <div class="spur"><div class="balken" id="bal-ch"></div></div>
-    <div class="ergebnis" id="erg-ch"></div>
   </section>
 </main>
 
-<section class="speicher" id="speicher">
-  <div class="zeile" style="--farbe: var(--pg)"><b>PostgreSQL</b><div class="spur"><div class="balken" id="sp-pg"></div></div><span class="wert" id="sw-pg">–</span></div>
-  <div class="zeile" style="--farbe: var(--ch)"><b>ClickHouse</b><div class="spur"><div class="balken" id="sp-ch"></div></div><span class="wert" id="sw-ch">–</span></div>
-  <div class="fazit" id="sp-fazit"></div>
-  <div class="erkl">Gleichartige Werte liegen in einer Spalte nebeneinander und lassen sich stark komprimieren.</div>
-</section>
+<div class="unten">
+  <section class="ergebnis">
+    <div class="ergebnis-kopf"><b>Ergebnis</b><span id="gleich"></span></div>
+    <div id="erg"></div>
+    <div class="speicher" id="speicher" hidden></div>
+  </section>
+  <section class="lesen">
+    <div class="paar">
+      <div class="karte pg" id="karte-pg"><h3>PostgreSQL liest</h3><div class="koepfe"></div><div class="raster"></div><div class="text"></div></div>
+      <div class="karte ch" id="karte-ch"><h3>ClickHouse liest</h3><div class="koepfe"></div><div class="raster"></div><div class="text"></div></div>
+    </div>
+  </section>
+</div>
 
 <footer>
   <button id="start">▶ Beide starten</button>
   <div id="urteil"></div>
-  <div class="tipp"><kbd>Leertaste</kbd> starten · <kbd>1</kbd>–<kbd id="k-max">4</kbd> Abfrage · <kbd>S</kbd> Speicher · <kbd>F</kbd> Vollbild</div>
+  <div class="technik"><kbd>Leertaste</kbd> starten · <kbd>1</kbd> bis <kbd id="k-max">5</kbd> Schritt · <kbd>F</kbd> Vollbild</div>
 </footer>
 
 <dialog id="dlg">
   <h3>Daten laden</h3>
-  <p id="dlg-text">Erzeugt <b>20 Mio. Service-Ereignisse</b> in ClickHouse und kopiert genau diese Zeilen nach PostgreSQL. Vorhandene Demo-Daten werden ersetzt. Dauert ca. 1–2 Minuten.</p>
+  <p id="dlg-text">Erzeugt <b>100 Mio. Service-Ereignisse</b> in ClickHouse und kopiert genau diese Zeilen nach PostgreSQL. Vorhandene Demo-Daten werden ersetzt. Dauert ca. 4 bis 5 Minuten und braucht rund 9 GB Platz.</p>
   <pre id="dlg-log" hidden></pre>
   <div class="knoepfe">
     <button id="dlg-abbr">Abbrechen</button>
-    <button id="dlg-ok" style="background: var(--ok); color: #0b1a10; border: 0; font-weight: 600">Laden</button>
+    <button id="dlg-ok" style="background: var(--ch); color: #151515; border-color: var(--ch); font-weight: 700">Laden</button>
   </div>
 </dialog>
 
@@ -150,9 +176,60 @@
 const $ = id => document.getElementById(id);
 const fmt = (x, d = 2) => x.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
 const zahl = x => Number(x).toLocaleString("de-DE");
+const mio = x => Number(x) >= 1e6 ? (Number(x) / 1e6).toLocaleString("de-DE", { maximumFractionDigits: 1 }) + " Mio." : zahl(x);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const KW = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|LIMIT|AS|AND|DESC|WITHIN GROUP|count|avg|round|quantileExact|percentile_disc|toDate)\b/g;
-const SKALA = 15; // Sekunden für einen vollen Balken während des Laufs
+const KW = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|LIMIT|AS|AND|DESC|WITHIN GROUP|count|countIf|FILTER|avg|round|toDate)\b/g;
+const SKALA = 7;
+const SPALTEN = [["zeit", "Zeit"], ["region", "Region"], ["dienst", "Dienst"], ["fehlertyp", "Fehlertyp"], ["status", "Status"], ["antwortzeit_ms", "Dauer"]];
+const REIHEN = 8;
+const tagDE = d => d.slice(8, 10) + "." + d.slice(5, 7) + ".";
+const datumDE = d => d.slice(8, 10) + "." + d.slice(5, 7) + "." + d.slice(0, 4);
+const mittel = a => a.reduce((s, x) => s + x, 0) / a.length;
+const median = a => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+const spitze = z => z.reduce((a, b) => +b[1] > +a[1] ? b : a);
+
+function balken(zeilen, linie) {
+  const max = Math.max(...zeilen.map(z => z.wert));
+  const kopf = linie ? `<span></span><span class="nl"><span style="right:${100 - linie.wert / max * 100}%">${linie.text}</span></span><span></span>` : "";
+  return `<div class="bk">${kopf}` + zeilen.map(z => `<span class="${z.t ? "t" : ""}">${esc(z.name)}</span>`
+    + `<span class="sp ${z.t ? "t" : ""}"><i style="width:${z.wert / max * 100}%"></i>${linie ? `<u style="left:${linie.wert / max * 100}%"></u>` : ""}</span>`
+    + `<span class="w ${z.t ? "t" : ""}">${z.text}</span>`).join("") + "</div>";
+}
+
+function verlauf(z) {
+  const B = 760, H = 250, l = 60, r = 20, o = 26, u = 26, max = 20000;
+  const x = i => l + i * (B - l - r) / (z.length - 1), y = v => H - u - v / max * (H - o - u);
+  const top = z.indexOf(spitze(z));
+  const gitter = [0, 5000, 10000, 15000, 20000].map(v => `<line x1="${l}" x2="${B - r}" y1="${y(v)}" y2="${y(v)}" stroke="#333"/><text x="${l - 10}" y="${y(v) + 4}" text-anchor="end">${zahl(v)}</text>`).join("");
+  const achse = z.map((w, i) => i % 3 === 0 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${tagDE(w[0])}</text>` : "").join("");
+  return `<svg class="verlauf" viewBox="0 0 ${B} ${H}">${gitter}${achse}<polyline fill="none" stroke="#faff69" stroke-width="3" points="${z.map((w, i) => x(i) + "," + y(+w[1])).join(" ")}"/>`
+    + `<circle cx="${x(top)}" cy="${y(+z[top][1])}" r="5" fill="#faff69"/><text class="t" x="${x(top) + 12}" y="${y(+z[top][1]) + 5}">${zahl(z[top][1])} (Woche ab ${tagDE(z[top][0])})</text></svg>`;
+}
+
+const SCHRITT = {
+  "1": {
+    erkenntnis: () => "Ein Jahr Betrieb. Wo und wann gab es auffällig viele Fehler?",
+    bild: z => `<div class="gross"><div><b>${mio(z[0][0])}</b>Service-Ereignisse</div><div><b>1 Jahr</b>${datumDE(z[0][1])} bis ${datumDE(z[0][2])}</div></div>`,
+  },
+  "2": {
+    erkenntnis: z => `${z[0][0]} fällt auf: rund ${zahl(Math.round((z[0][1] - mittel(z.slice(1).map(r => +r[1]))) / 1000) * 1000)} Fehler mehr als die anderen Regionen.`,
+    bild: z => balken(z.map((r, i) => ({ name: r[0], wert: +r[1], text: zahl(r[1]), t: i === 0 })),
+      { wert: mittel(z.slice(1).map(r => +r[1])), text: "Schnitt der anderen Regionen" }),
+  },
+  "3": {
+    erkenntnis: z => { const s = spitze(z); return `In der Woche ab ${tagDE(s[0])} gab es rund ${Math.round(s[1] / median(z.map(r => +r[1])))}-mal so viele Fehler wie sonst.`; },
+    bild: verlauf,
+  },
+  "4": {
+    erkenntnis: z => `Ursache gefunden: ${z[0][1]} im Dienst ${z[0][0]}, ${zahl(z[0][2])} Fälle.`,
+    bild: z => balken(z.map((r, i) => ({ name: r[0] + " · " + r[1], wert: +r[2], text: zahl(r[2]), t: i === 0 }))),
+  },
+  "5": {
+    erkenntnis: z => { const m = z.reduce((a, b) => +b[1] > +a[1] ? b : a); return `${m[0]} ist am langsamsten: im Schnitt ${zahl(m[1])} ms, 95 % der Anfragen brauchen höchstens ${zahl(m[2])} ms.`; },
+    bild: z => `<table><thead><tr><th>Dienst</th><th class="zahl">Durchschnitt</th><th class="zahl">95-%-Perzentil</th></tr></thead><tbody>`
+      + z.map(r => `<tr><td>${esc(r[0])}</td><td class="zahl">${zahl(r[1])} ms</td><td class="zahl">${zahl(r[2])} ms</td></tr>`).join("") + "</tbody></table>",
+  },
+};
 
 let abfragen = [], aktuell = 0, laeuft = false;
 
@@ -171,8 +248,8 @@ async function status() {
       const n = Number(s[db]) || 0;
       $("p-" + db).classList.toggle("an", n > 0 && !s.laedt);
       $("n-" + db).textContent = s.laedt ? "wird geladen …"
-        : n > 0 ? zahl(n) + " Zeilen"
-        : s[db + "_bereit"] ? "keine Daten – oben „Daten laden“" : "startet …";
+        : n > 0 ? mio(n) + " Zeilen"
+        : s[db + "_bereit"] ? "keine Daten, erst „Daten laden“" : "startet …";
     }
   } catch { for (const db of ["pg", "ch"]) { $("p-" + db).classList.remove("an"); $("n-" + db).textContent = "nicht erreichbar"; } }
 }
@@ -181,38 +258,58 @@ function zuruecksetzen() {
   for (const db of ["pg", "ch"]) {
     $("zeit-" + db).innerHTML = '0,00<span class="s">s</span>';
     $("zst-" + db).textContent = "bereit"; $("zst-" + db).className = "zustand";
-    $("bal-" + db).style.width = "0"; $("erg-" + db).innerHTML = "";
+    $("bal-" + db).style.width = "0";
+    karteLeer(db);
   }
-  $("urteil").innerHTML = "";
+  $("speicher").hidden = true; $("erg").innerHTML = ""; $("gleich").textContent = ""; $("gleich").className = "";
+  $("urteil").innerHTML = ""; $("erkenntnis").textContent = "";
 }
 
 function waehle(i) {
   if (laeuft) return;
-  document.body.classList.remove("modus-speicher");
   aktuell = i;
   const a = abfragen[i];
   [...$("tabs").children].forEach((b, j) => b.classList.toggle("aktiv", j === i));
-  $("frage").textContent = a.titel;
+  $("frage").textContent = a.titel.replace(/^[^:?]+[:?]\s*/, "");
   const huebsch = sql => esc(sql.replace(/ {2,}AS /g, " AS ")).replace(KW, '<span class="kw">$1</span>');
   $("sql-pg").innerHTML = huebsch(a.pg);
   $("sql-ch").innerHTML = huebsch(a.ch);
   zuruecksetzen();
 }
 
-function tabelle(r) {
-  const istZahl = v => /^-?\d+(\.\d+)?$/.test(v);
-  const kopf = r.spalten.map((s, i) => `<th class="${istZahl(r.zeilen[0]?.[i]) ? "zahl" : ""}">${esc(s)}</th>`).join("");
-  const rumpf = r.zeilen.map(z => "<tr>" + z.map(v => istZahl(v)
-      ? `<td class="zahl">${esc(Number(v).toLocaleString("de-DE", { maximumFractionDigits: 2 }))}</td>`
-      : `<td>${esc(v)}</td>`).join("") + "</tr>").join("");
-  return `<table><thead><tr>${kopf}</tr></thead><tbody>${rumpf}</tbody></table>`;
+const noetig = db => SPALTEN.map(([s]) => db === "pg" || new RegExp(`\\b${s}\\b`).test(abfragen[aktuell].ch));
+
+function karteLeer(db) {
+  const n = noetig(db), k = $("karte-" + db);
+  k.className = "karte " + db;
+  k.querySelector(".koepfe").innerHTML = SPALTEN.map(([, t], i) => `<span class="${n[i] ? "noetig" : ""}">${t}</span>`).join("");
+  k.querySelector(".raster").innerHTML = Array.from({ length: REIHEN * SPALTEN.length }, (_, i) => {
+    const zeile = Math.floor(i / SPALTEN.length), spalte = i % SPALTEN.length;
+    return `<i class="${n[spalte] ? "an" : ""}" style="--takt: ${db === "pg" ? zeile : spalte}"></i>`;
+  }).join("");
+  k.querySelector(".text").textContent = db === "pg" ? "Liest jede Zeile komplett." : "Liest nur die nötigen Spalten.";
+}
+
+function karteFertig(db, [zeilen, bytes, gesamt]) {
+  const k = $("karte-" + db), n = noetig(db).filter(Boolean).length;
+  const reihen = Math.max(1, Math.round(Math.min(1, zeilen / gesamt) * REIHEN));
+  const start = reihen === REIHEN ? 0 : 3;
+  k.querySelectorAll(".raster i").forEach((c, i) => {
+    const z = Math.floor(i / SPALTEN.length);
+    if (z < start || z >= start + reihen) c.classList.remove("an");
+  });
+  k.className = `karte ${db} aktiv fertig`;
+  const mb = bytes / 1e6, menge = mb >= 1000 ? fmt(mb / 1000, 1) + " GB" : fmt(mb, mb < 10 ? 1 : 0) + " MB";
+  k.querySelector(".text").innerHTML = `<b>${menge}</b> gelesen<br>`
+    + `${n === SPALTEN.length ? "alle 6" : n + " von 6"} Spalten, ${mio(zeilen)} Zeilen`;
 }
 
 async function starten() {
-  if (laeuft || document.body.classList.contains("modus-speicher")) return;
+  if (laeuft) return;
   laeuft = true; $("start").disabled = true; zuruecksetzen();
-  const nr = abfragen[aktuell].nr, t0 = performance.now(), fertig = {};
-  for (const db of ["pg", "ch"]) { $("zst-" + db).textContent = "läuft …"; }
+  const nr = abfragen[aktuell].nr, t0 = performance.now(), fertig = {}, zeilen = {};
+  const name = { pg: "PostgreSQL", ch: "ClickHouse" };
+  for (const db of ["pg", "ch"]) { $("zst-" + db).textContent = "läuft …"; $("karte-" + db).classList.add("aktiv", "liest"); }
 
   const tick = setInterval(() => {
     const e = (performance.now() - t0) / 1000;
@@ -225,39 +322,45 @@ async function starten() {
   const lauf = db => api("/api/run", { db, nr }).then(r => {
     fertig[db] = r.sekunden;
     $("zeit-" + db).innerHTML = fmt(r.sekunden) + '<span class="s">s</span>';
-    $("zst-" + db).textContent = "✓ fertig"; $("zst-" + db).className = "zustand fertig";
-    $("erg-" + db).innerHTML = tabelle(r);
+    $("zst-" + db).textContent = "fertig"; $("zst-" + db).className = "zustand fertig";
+    zeilen[db] = r.zeilen;
+    karteFertig(db, r.gelesen);
+    if (!$("erg").innerHTML) {
+      $("erg").innerHTML = SCHRITT[nr].bild(r.zeilen);
+      $("gleich").textContent = `von ${name[db]}, ${name[db === "pg" ? "ch" : "pg"]} rechnet noch …`;
+      $("erkenntnis").textContent = "→ " + SCHRITT[nr].erkenntnis(r.zeilen);
+    }
   }).catch(e => {
     fertig[db] = null;
+    $("karte-" + db).classList.remove("liest");
     $("zst-" + db).innerHTML = `<span class="fehler">Fehler: ${esc(e.message)}</span>`;
   });
 
   await Promise.all([lauf("pg"), lauf("ch")]);
   clearInterval(tick);
+  if (zeilen.pg && zeilen.ch) {
+    const norm = z => JSON.stringify(z.map(r => r.map(v => v !== "" && !isNaN(v) ? Number(v) : v)));
+    const gleich = norm(zeilen.pg) === norm(zeilen.ch);
+    $("gleich").textContent = gleich ? "" : "Achtung: die Ergebnisse unterscheiden sich";
+    $("gleich").className = gleich ? "" : "fehler";
+  }
   if (fertig.pg && fertig.ch) {
     const max = Math.max(fertig.pg, fertig.ch);
     $("bal-pg").style.width = fertig.pg / max * 100 + "%";
     $("bal-ch").style.width = Math.max(0.6, fertig.ch / max * 100) + "%";
     const f = fertig.pg / fertig.ch;
-    $("urteil").innerHTML = `ClickHouse war ${f >= 10 ? Math.round(f) : fmt(f, 1)}× schneller`
+    $("urteil").innerHTML = `<span class="ch">ClickHouse</span> ${f >= 10 ? Math.round(f) : fmt(f, 1)}-mal schneller`
       + `<small>${fmt(fertig.ch)} s statt ${fmt(fertig.pg)} s</small>`;
   }
+  if (nr === "5" && zeilen.pg && zeilen.ch) await speicher();
   laeuft = false; $("start").disabled = false;
 }
 
 async function speicher() {
-  if (laeuft) return;
-  document.body.classList.add("modus-speicher");
-  [...$("tabs").children].forEach((b, j) => b.classList.toggle("aktiv", j === abfragen.length));
-  $("sp-pg").style.width = $("sp-ch").style.width = "0";
-  const s = await api("/api/speicher");
-  const max = Math.max(s.pg, s.ch) || 1, mb = b => zahl(Math.round(b / 1e6)) + " MB";
-  $("sw-pg").textContent = mb(s.pg); $("sw-ch").textContent = mb(s.ch);
-  requestAnimationFrame(() => {
-    $("sp-pg").style.width = s.pg / max * 100 + "%";
-    $("sp-ch").style.width = Math.max(0.8, s.ch / max * 100) + "%";
-  });
-  $("sp-fazit").textContent = s.ch ? `ClickHouse braucht ${Math.round(s.pg / s.ch)}× weniger Platz` : "";
+  const s = await api("/api/speicher"), mb = b => zahl(Math.round(b / 1e6)) + " MB";
+  $("speicher").innerHTML = `<div class="ergebnis-kopf"><b>Speicherbedarf der Tabelle</b><span>ClickHouse braucht rund ${Math.round(s.pg / s.ch)}-mal weniger</span></div>`
+    + balken([{ name: "PostgreSQL", wert: s.pg, text: mb(s.pg) }, { name: "ClickHouse", wert: s.ch, text: mb(s.ch), t: true }]);
+  $("speicher").hidden = false;
 }
 
 // ---------- Daten laden ----------
@@ -272,7 +375,7 @@ $("dlg-ok").onclick = async () => {
   $("dlg-ok").hidden = true; $("dlg-text").hidden = true; $("dlg-log").hidden = false;
   $("dlg-abbr").textContent = "Schließen";
   $("dlg-log").textContent = "Starte …";
-  await api("/api/laden", { n: 20000000 });
+  await api("/api/laden", { n: 100000000 });
   const t0 = Date.now();
   ladenPoll = setInterval(async () => {
     const s = await api("/api/laden");
@@ -282,6 +385,9 @@ $("dlg-ok").onclick = async () => {
 };
 
 // ---------- Bedienung ----------
+const anpassen = () => document.documentElement.style.setProperty("--z", Math.min(innerWidth / 1660, innerHeight / 950));
+addEventListener("resize", anpassen);
+anpassen();
 $("start").onclick = starten;
 $("vollbild").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
 document.addEventListener("keydown", e => {
@@ -290,16 +396,14 @@ document.addEventListener("keydown", e => {
   else if (/^[1-9]$/.test(e.key) && +e.key <= abfragen.length) waehle(+e.key - 1);
   else if (e.key === "ArrowRight") waehle((aktuell + 1) % abfragen.length);
   else if (e.key === "ArrowLeft") waehle((aktuell - 1 + abfragen.length) % abfragen.length);
-  else if (e.key.toLowerCase() === "s") speicher();
   else if (e.key.toLowerCase() === "f") $("vollbild").click();
 });
 
 (async () => {
   abfragen = await api("/api/abfragen");
-  const kurz = a => a.titel.split(":")[0];
-  $("tabs").innerHTML = abfragen.map((a, i) => `<button><span class="k">${i + 1}</span>${esc(kurz(a))}</button>`).join("")
-    + `<button><span class="k">S</span>Speicherplatz</button>`;
-  [...$("tabs").children].forEach((b, i) => b.onclick = () => i < abfragen.length ? waehle(i) : speicher());
+  const kurz = a => a.titel.match(/^[^:?]+\??/)[0];
+  $("tabs").innerHTML = abfragen.map((a, i) => `<button><span class="k">${i + 1}</span>${esc(kurz(a))}</button>`).join("");
+  [...$("tabs").children].forEach((b, i) => b.onclick = () => waehle(i));
   $("k-max").textContent = abfragen.length;
   waehle(0); status(); setInterval(status, 5000);
 })();
