@@ -11,7 +11,7 @@ abfrage() { awk -v nr="$2" '/^-- @/{on = ($2 == "@" nr)} on && !/^--/' "$1"; }
 titel()   { grep "^-- @$1 " sql/abfragen_clickhouse.sql | sed "s/^-- @$1 //"; }
 weiter()  { if [ -n "${AUTO:-}" ]; then sleep "${PAUSE:-3}"; else read -rsp "${Y}[Enter]${R}" _; echo; fi; }
 
-nummern="${*:-1 2 3 4}"
+nummern="${*:-1 2 3 4 5}"
 for nr in $nummern; do
   echo; echo "${B}════════ Abfrage $nr: $(titel "$nr") ════════${R}"
 

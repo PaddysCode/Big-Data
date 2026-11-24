@@ -20,7 +20,7 @@ zeit_pg() {  # Sekunden
 }
 median() { sort -n | awk '{a[NR]=$1} END{print a[int((NR+1)/2)]}'; }
 
-zeilen=$(docker exec ch clickhouse-client -q "SELECT formatReadableQuantity(count()) FROM ereignisse")
+zeilen=$(docker exec ch clickhouse-client -q "SELECT formatReadableQuantity(count()) FROM service_ereignisse")
 echo "Datenmenge: $zeilen Zeilen, $RUNS Messläufe je Abfrage (Median)"
 printf '\n%-72s %12s %12s %8s\n' "Abfrage" "ClickHouse" "PostgreSQL" "Faktor"
 

@@ -1,30 +1,41 @@
--- @1 Zählen: Wie viele Fehler gab es insgesamt?
-SELECT count() AS fehler
-FROM ereignisse
-WHERE status = 'Fehler';
+-- @1 Daten: Wie viele Service-Ereignisse haben wir?
+SELECT count()                                   AS ereignisse,
+       min(zeit)                                 AS von,
+       max(zeit)                                 AS bis
+FROM service_ereignisse;
 
--- @2 Gruppieren: Fehlerquote je Region
+-- @2 Wo? In welcher Region gibt es die meisten Fehler?
 SELECT region,
-       count()                                   AS ereignisse,
-       round(100 * avg(status = 'Fehler'), 2)    AS fehler_prozent
-FROM ereignisse
+       count()                                   AS fehler
+FROM service_ereignisse
+WHERE fehlertyp != 'kein Fehler'
 GROUP BY region
-ORDER BY fehler_prozent DESC, region;
+ORDER BY fehler DESC, region;
 
--- @3 Rechnen: Durchschnitt und 95-%-Perzentil der Antwortzeit je Dienst
+-- @3 Wann? Fehler pro Woche in Köln
+SELECT toDate(toStartOfWeek(zeit))               AS woche,
+       count()                                   AS fehler
+FROM service_ereignisse
+WHERE region = 'Köln' AND fehlertyp != 'kein Fehler'
+  AND zeit >= '2026-01-04' AND zeit < '2026-04-26'
+GROUP BY woche
+ORDER BY woche;
+
+-- @4 Warum? Fehler in Köln vom 10. bis 17. März nach Dienst und Fehlertyp
 SELECT dienst,
-       round(avg(antwortzeit_ms))                AS avg_ms,
-       quantileExact(0.95)(antwortzeit_ms)       AS p95_ms
-FROM ereignisse
-GROUP BY dienst
-ORDER BY avg_ms DESC, dienst;
+       fehlertyp,
+       count()                                   AS fehler
+FROM service_ereignisse
+WHERE region = 'Köln' AND fehlertyp != 'kein Fehler'
+  AND zeit BETWEEN '2026-03-10' AND '2026-03-17'
+GROUP BY dienst, fehlertyp
+ORDER BY fehler DESC, dienst, fehlertyp
+LIMIT 5;
 
--- @4 Schwer: 95-%-Perzentil je Region und Tag (ca. 2.200 Gruppen), die 8 schlimmsten Tage
-SELECT region,
-       toDate(zeit)                              AS tag,
-       count()                                   AS ereignisse,
-       quantileExact(0.95)(antwortzeit_ms)       AS p95_ms
-FROM ereignisse
-GROUP BY region, tag
-ORDER BY p95_ms DESC, region, tag
-LIMIT 8;
+-- @5 Vergleich: Antwortzeiten je Dienst bei 10 Mio. Zeilen
+SELECT dienst,
+       round(avg(antwortzeit_ms))                AS durchschnitt,
+       round(quantileExactInclusive(0.95)(antwortzeit_ms)) AS p95
+FROM ereignisse_10mio
+GROUP BY dienst
+ORDER BY dienst;
